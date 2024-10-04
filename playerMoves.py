@@ -1,4 +1,5 @@
 from stockfish import Stockfish
+import time
 
 
 ### STOCKFISH SETUP ###
@@ -15,10 +16,10 @@ chessboard = [
     ["R", "P", " ", " ", " ", " ", "p", "r"],
     ["N", "P", " ", " ", " ", " ", "p", "n"],
     ["B", "P", " ", " ", " ", " ", "p", "b"],
-    [" ", " ", " ", " ", " ", " ", "p", "q"],
+    ["Q", "P", " ", " ", " ", " ", "p", "q"],
     ["K", "P", " ", " ", " ", " ", "p", "k"],
-    [" ", "P", " ", " ", " ", " ", "p", "b"],
-    [" ", "P", " ", " ", " ", " ", "p", "n"],
+    ["B", "P", " ", " ", " ", " ", "p", "b"],
+    ["N", "P", " ", " ", " ", " ", "p", "n"],
     ["R", "P", " ", " ", " ", " ", "p", "r"],
 ]
 
@@ -319,6 +320,7 @@ def make_move(initialX, initialY, newX, newY):
             disable_castle(piece)
     else:
         print("Lance invalido")
+        return False
 
 
 def castle_move(initialX, initialY, newX, newY):
@@ -351,3 +353,21 @@ def stockfish_move():
     make_move(x, y, newX, newY)
 
 
+while True:
+    validMove = False
+    while not validMove:
+        print_board()
+        move = input("Faça o lance: ")
+        
+        try:
+            if make_move(int(move[0]), int(move[1]), int(move[2]), int(move[3])) != False:
+                print_board()
+                validMove = True
+        except:
+            print("Formato inválido, use coordenada inicial e coordenada final. EX: 4143 (e2 => e4)")
+
+    time.sleep(1)
+    stockfish_move()
+
+    if move == "quit":
+        quit()
