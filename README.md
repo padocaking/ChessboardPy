@@ -24,5 +24,4 @@
 | 20. => REST (waiting reed low)...   |
 +-------------------------------------+
 <pre>
-  
-Stockfish download: https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-windows-x86-64-avx2.zip
+[Stockfish download](https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-windows-x86-64-avx2.zip)
