@@ -1,3 +1,4 @@
+# pip install stockfish
 from stockfish import Stockfish
 import time
 
