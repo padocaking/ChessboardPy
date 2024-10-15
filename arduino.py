@@ -21,8 +21,15 @@ serialInst.port = use
 serialInst.open()
 
 while True:
-    command = input("Arduino Command ('exit' to exit): ")
-    serialInst.write(command)
-    if command == "exit":
-        serialInst.close()
-        exit()
+    if serialInst.in_waiting > 0:
+        read = serialInst.read_all()
+        newRead = read.decode('utf-8')
+        print(newRead)
+        serialInst.write(newRead.encode('utf-8'))
+
+    #command = input("Coordenada: ")
+    #serialInst.write(command.encode('utf-8'))
+
+    #if command == "exit":
+    #    serialInst.close()
+    #    quit()
