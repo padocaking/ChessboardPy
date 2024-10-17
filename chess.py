@@ -272,6 +272,7 @@ def show_piece_moves(x, y):
     
     if piece == " ":
         print("No piece")
+        return []
     elif piece == "p":
         return pawn_moves(x, y)
     elif piece == "n":
@@ -294,34 +295,36 @@ def show_stockfish_move():
 
 ### FUNCIONALIDADES DE FAZER LANCES ###
 
-def make_move(initialX, initialY, newX, newY):
-    piece = chessboard[initialX][initialY]
-    legalMoves = show_piece_moves(initialX, initialY)
-    isPossible = False
+def make_piece_move(initialX, initialY, newX, newY):
+    if valid_position(initialX, initialY) and valid_position(newX, newY):
 
-    # Checa se lance é possível
-    for moves in legalMoves:
-        if moves == [newX, newY]:
-            isPossible = True
+        piece = chessboard[initialX][initialY]
+        legalMoves = show_piece_moves(initialX, initialY)
+        isPossible = False
 
-    # Caso seja Roque
-    if initialX == 4 and (initialY == 0 or initialY == 7) and (newX == 6 or newX == 1) and (newY == 0 or newY == 7):
-        castle_move(initialX, initialY, newX, newY)
-    elif isPossible:
-        # Faz o lance
-        chessboard[initialX][initialY] = " "
-        chessboard[newX][newY] = piece
+        # Checa se lance é possível
+        for moves in legalMoves:
+            if moves == [newX, newY]:
+                isPossible = True
 
-        # Adiciona no histórico de lance
-        move_notation = coord_to_notation(initialX, initialY) + coord_to_notation(newX, newY)
-        moves_history.append(move_notation)
+        # Caso seja Roque
+        if initialX == 4 and (initialY == 0 or initialY == 7) and (newX == 6 or newX == 1) and (newY == 0 or newY == 7):
+            castle_move(initialX, initialY, newX, newY)
+        elif isPossible:
+            # Faz o lance
+            chessboard[initialX][initialY] = " "
+            chessboard[newX][newY] = piece
 
-        # Checa se é rei
-        if piece.lower() == "k":
-            disable_castle(piece)
-    else:
-        print("Lance invalido")
-        return False
+            # Adiciona no histórico de lance
+            move_notation = coord_to_notation(initialX, initialY) + coord_to_notation(newX, newY)
+            moves_history.append(move_notation)
+
+            # Checa se é rei
+            if piece.lower() == "k":
+                disable_castle(piece)
+        else:
+            print("Lance invalido")
+            return False
 
 
 def castle_move(initialX, initialY, newX, newY):
@@ -351,24 +354,24 @@ def stockfish_move():
     x, y = notation_to_x(best_move[0]), notation_to_y(best_move[1])
     newX, newY = notation_to_x(best_move[2]), notation_to_y(best_move[3])
 
-    make_move(x, y, newX, newY)
+    make_piece_move(x, y, newX, newY)
 
 
-while True:
-    validMove = False
-    while not validMove:
-        print_board()
-        move = input("Faça o lance: ")
-        
-        try:
-            if make_move(int(move[0]), int(move[1]), int(move[2]), int(move[3])) != False:
-                print_board()
-                validMove = True
-        except:
-            print("Formato inválido, use coordenada inicial e coordenada final. EX: 4143 (e2 => e4)")
-
-    time.sleep(1)
-    stockfish_move()
-
-    if move == "quit":
-        quit()
+#while True:
+#    validMove = False
+#    while not validMove:
+#        print_board()
+#        move = input("Faça o lance: ")
+#        
+#        try:
+#            if make_piece_move(int(move[0]), int(move[1]), int(move[2]), int(move[3])) != False:
+#                print_board()
+#                validMove = True
+#        except:
+#            print("Formato inválido, use coordenada inicial e coordenada final. EX: 4143 (e2 => e4)")
+#
+#    time.sleep(1)
+#    stockfish_move()
+#
+#    if move == "quit":
+#        quit()
