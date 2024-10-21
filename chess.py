@@ -347,7 +347,7 @@ def castle_move(initialX, initialY, newX, newY):
     disable_castle(king)
 
 
-def stockfish_move():
+def stockfish_piece_move():
     stockfish.set_position(moves_history)
     best_move = str(stockfish.get_best_move())
 
@@ -355,6 +355,8 @@ def stockfish_move():
     newX, newY = notation_to_x(best_move[2]), notation_to_y(best_move[3])
 
     make_piece_move(x, y, newX, newY)
+
+    return str(x) + str(y) + str(newX) + str(newY)
 
 
 #while True:

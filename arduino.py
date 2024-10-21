@@ -1,8 +1,9 @@
 # pip intall pyserial
 import serial.tools.list_ports
+from chess import make_piece_move, show_piece_moves, stockfish_piece_move
 import time
-from chess import show_piece_moves
-from chess import make_piece_move
+
+### ARDUINO SERIAL CONNECTION
 
 ports = serial.tools.list_ports.comports()
 serialInst = serial.Serial()
@@ -23,6 +24,10 @@ serialInst.baudrate = 9600
 serialInst.port = use
 serialInst.open()
 
+
+
+### ARDUINO CHESS CODE
+
 waiting_for_fix = False
 
 initialX = 8
@@ -32,6 +37,8 @@ def show_move(x, y):
     moves_arr = show_piece_moves(x, y)
     moves_output = ""
 
+    print("s" + str(x) + str(y))
+
     if len(moves_arr) > 0:
         for move in moves_arr:
             moves_output += str(move[0]) + str(move[1])
@@ -40,6 +47,7 @@ def show_move(x, y):
         serialInst.write("88".encode('utf-8'))
     else:
         serialInst.write(moves_output.encode('utf-8'))
+        print(moves_output)
 
 
 def make_move(iniX, iniY, x, y):
@@ -48,11 +56,17 @@ def make_move(iniX, iniY, x, y):
 
     print("m" + str(x) + str(y))
 
-    if make_piece_move(iniX, iniY, x, y) == False:
-        serialInst.write((str(x) + str(y) + str(iniX) + str(iniY)).encode('utf-8'))
+    if not(x == iniX and y == iniY):
+        if make_piece_move(iniX, iniY, x, y) == False:
+            invalid_move = "e" + str(x) + str(y) + str(iniX) + str(iniY)
+            serialInst.write(invalid_move.encode('utf-8'))
+        else:
+            stockfish_move = "s" + stockfish_piece_move()
+            serialInst.write(stockfish_move.encode('utf-8'))
+            print("s" + stockfish_move)
     else:
-        xy = str(x) + str(y)
-        serialInst.write(xy.encode('utf-8'))
+        cancel_move = "88"
+        serialInst.write(cancel_move.encode('utf-8'))
 
 
 while True:
@@ -72,6 +86,8 @@ while True:
 
             case "m":
                 make_move(initialX, initialY, x, y)
+
+        print("-------------")
 
 
     #command = input("Coordenada: ")
