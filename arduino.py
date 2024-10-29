@@ -1,6 +1,6 @@
 # pip intall pyserial
 import serial.tools.list_ports
-from chess import make_piece_move, show_piece_moves, stockfish_piece_move
+from chess import chessboard, make_piece_move, show_piece_moves, stockfish_piece_move
 import time
 
 ### ARDUINO SERIAL CONNECTION
@@ -28,29 +28,38 @@ serialInst.open()
 
 ### ARDUINO CHESS CODE
 
-waiting_for_fix = False
-
 initialX = 8
 initialY = 8
 
+piece_up = False
+white_turn = True
+
 def show_move(x, y):
-    moves_arr = show_piece_moves(x, y)
-    moves_output = ""
+    global white_turn
+    global piece_up
 
-    print("s" + str(x) + str(y))
+    if (chessboard[x][y].isupper() and white_turn) or (not chessboard[x][y].isupper() and not white_turn):
+        moves_arr = show_piece_moves(x, y)
+        moves_output = f"l{x}{y}"
 
-    if len(moves_arr) > 0:
-        for move in moves_arr:
-            moves_output += str(move[0]) + str(move[1])
+        print("s" + str(x) + str(y))
 
-    if moves_output == "":
-        serialInst.write("88".encode('utf-8'))
-    else:
+        if len(moves_arr) > 0:
+            for move in moves_arr:
+                moves_output += str(move[0]) + str(move[1])
+
         serialInst.write(moves_output.encode('utf-8'))
         print(moves_output)
+    else:
+        wrong_turn = f"c{x}{y}"
+        serialInst.write(wrong_turn.encode('utf-8'))
+        print(wrong_turn)
+        piece_up = False
 
 
 def make_move(iniX, iniY, x, y):
+    global white_turn
+
     x = int(command[1])
     y = int(command[2])
 
@@ -60,32 +69,47 @@ def make_move(iniX, iniY, x, y):
         if make_piece_move(iniX, iniY, x, y) == False:
             invalid_move = "e" + str(x) + str(y) + str(iniX) + str(iniY)
             serialInst.write(invalid_move.encode('utf-8'))
+            print(invalid_move)
         else:
-            stockfish_move = "s" + stockfish_piece_move()
-            serialInst.write(stockfish_move.encode('utf-8'))
-            print("s" + stockfish_move)
+            serialInst.write(f"v{x}{y}".encode('utf-8'))
+            white_turn = not white_turn
     else:
-        cancel_move = "88"
+        cancel_move = "r"
         serialInst.write(cancel_move.encode('utf-8'))
+
+def make_stockfish_move(iniX, iniY, x, y):
+    make_piece_move(iniX, iniY, x, y)
 
 
 while True:
     if serialInst.in_waiting > 0:
         read = serialInst.read_all()
         command = read.decode('utf-8')
+        print(read)
 
         typ = command[0]
         x = int(command[1])
         y = int(command[2])
 
+        if len(command) > 5:
+            endX = int(command[3])
+            endY = int(command[4])
+
         match typ:
             case "s":
-                show_move(x, y)
-                initialX = x
-                initialY = y
+                if not piece_up:
+                    piece_up = True
+                    show_move(x, y)
+                    initialX = x
+                    initialY = y
 
             case "m":
                 make_move(initialX, initialY, x, y)
+                piece_up = False
+
+            case "f":
+                make_stockfish_move(x, y, endX, endY)
+
 
         print("-------------")
 
