@@ -1,7 +1,6 @@
 # pip intall pyserial
 import serial.tools.list_ports
 from chess import chessboard, make_piece_move, show_piece_moves, stockfish_piece_move
-import time
 
 ### ARDUINO SERIAL CONNECTION
 
@@ -48,10 +47,11 @@ def show_move(x, y):
             for move in moves_arr:
                 moves_output += str(move[0]) + str(move[1])
 
+        moves_output += "\n"
         serialInst.write(moves_output.encode('utf-8'))
         print(moves_output)
     else:
-        wrong_turn = f"c{x}{y}"
+        wrong_turn = f"c{x}{y}\n"
         serialInst.write(wrong_turn.encode('utf-8'))
         print(wrong_turn)
         piece_up = False
@@ -67,14 +67,14 @@ def make_move(iniX, iniY, x, y):
 
     if not(x == iniX and y == iniY):
         if make_piece_move(iniX, iniY, x, y) == False:
-            invalid_move = "e" + str(x) + str(y) + str(iniX) + str(iniY)
+            invalid_move = "e" + str(x) + str(y) + str(iniX) + str(iniY) + "\n"
             serialInst.write(invalid_move.encode('utf-8'))
             print(invalid_move)
         else:
-            serialInst.write(f"v{x}{y}".encode('utf-8'))
+            serialInst.write(f"v{x}{y}\n".encode('utf-8'))
             white_turn = not white_turn
     else:
-        cancel_move = "r"
+        cancel_move = "r\n"
         serialInst.write(cancel_move.encode('utf-8'))
 
 def make_stockfish_move(iniX, iniY, x, y):
