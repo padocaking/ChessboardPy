@@ -5,9 +5,10 @@ import time
 
 ### STOCKFISH SETUP ###
 
+elo = 1350
 stockfish = Stockfish("stockfish-windows-x86-64-avx2.exe")
 stockfish.set_depth(15)
-stockfish.set_skill_level(5)
+stockfish.set_elo_rating(elo)
 stockfish.get_parameters()
 
 
@@ -15,7 +16,7 @@ stockfish.get_parameters()
 
 chessboard = [
     ["R", "P", " ", " ", " ", " ", "p", "r"],
-    ["N", "P", " ", " ", " ", " ", "p", "n"],
+    ["N", "P", " ", " ", " ", " ", "P", "n"],
     ["B", "P", " ", " ", " ", " ", "p", "b"],
     ["Q", "P", " ", " ", " ", " ", "p", "q"],
     ["K", "P", " ", " ", " ", " ", "p", "k"],
@@ -23,21 +24,6 @@ chessboard = [
     ["N", "P", " ", " ", " ", " ", "p", "n"],
     ["R", "P", " ", " ", " ", " ", "p", "r"],
 ]
-
-moves_history = []
-
-white_king_moved = False
-black_king_moved = False
-
-def disable_castle(piece):
-    global white_king_moved
-    global black_king_moved
-
-    if piece.isupper():
-        white_king_moved = True
-    else:
-        black_king_moved = True
-
 
 def print_board():
     print("+---+---+---+---+---+---+---+---+")
@@ -51,6 +37,29 @@ def print_board():
         print("+---+---+---+---+---+---+---+---+")
         i -= 1
     print("  0   1   2   3   4   5   6   7  ")
+
+
+moves_history = []
+
+white_turn = True
+
+white_king_moved = False
+black_king_moved = False
+
+en_passant = []
+en_passant_turn = False
+
+
+### MOVIMENTOS ESPECIAIS
+
+def disable_castle(piece):
+    global white_king_moved
+    global black_king_moved
+
+    if piece.isupper():
+        white_king_moved = True
+    else:
+        black_king_moved = True
 
 
 ### CONVERSÃO COORDENADA -> NOTAÇÃO XADREZ ###
@@ -115,6 +124,8 @@ def valid_position(x, y):
 
 
 def pawn_moves(x, y):
+    global en_passant, en_passant_turn
+
     piece_color = chessboard[x][y].isupper()
     direction = 1 if piece_color else -1
 
@@ -132,6 +143,10 @@ def pawn_moves(x, y):
     # Andar duas casas
     twoSqrY = y + 2 * direction
     if (y == 1 and direction == 1) or (y == 6 and direction == -1):
+        en_passant = []
+        en_passant.append([x, oneSqrY])
+        en_passant.append([x, twoSqrY])
+        en_passant_turn = True
         add_pawn_moves(twoSqrY, moves)
 
     # Capturas
@@ -141,6 +156,9 @@ def pawn_moves(x, y):
         if valid_position(captureX, oneSqrY):
             if chessboard[captureX][oneSqrY].isupper() != piece_color and chessboard[captureX][oneSqrY] != " ":
                 moves.append([captureX, oneSqrY])
+
+    if len(en_passant) > 0:
+        moves.append(en_passant[0])
 
     return moves
 
@@ -295,10 +313,16 @@ def show_stockfish_move():
 
 ### FUNCIONALIDADES DE FAZER LANCES ###
 
-def make_piece_move(initialX, initialY, newX, newY):
+def make_piece_move(initialX, initialY, newX, newY, prom = ""):
+    global white_turn, en_passant, en_passant_turn
+
     if valid_position(initialX, initialY) and valid_position(newX, newY):
 
         piece = chessboard[initialX][initialY]
+
+        if (piece.isupper() and not white_turn) or (not piece.isupper() and white_turn):
+            return False
+
         legalMoves = show_piece_moves(initialX, initialY)
         isPossible = False
 
@@ -310,18 +334,34 @@ def make_piece_move(initialX, initialY, newX, newY):
         # Caso seja Roque
         if initialX == 4 and (initialY == 0 or initialY == 7) and (newX == 6 or newX == 1) and (newY == 0 or newY == 7):
             castle_move(initialX, initialY, newX, newY)
+            white_turn = not white_turn
         elif isPossible:
+            # Caso seja promoção
+            prom = prom.upper() if piece.isupper() else prom.lower()
+
             # Faz o lance
             chessboard[initialX][initialY] = " "
-            chessboard[newX][newY] = piece
+            chessboard[newX][newY] = piece if len(prom) == 0 else prom
 
             # Adiciona no histórico de lance
-            move_notation = coord_to_notation(initialX, initialY) + coord_to_notation(newX, newY)
+            move_notation = coord_to_notation(initialX, initialY) + coord_to_notation(newX, newY) + prom.lower()
             moves_history.append(move_notation)
+
+            # Inverte a cor do próximo lance
+            white_turn = not white_turn
 
             # Checa se é rei
             if piece.lower() == "k":
                 disable_castle(piece)
+
+            # Caso seja en passant
+            if len(en_passant) > 0:
+                if newX == en_passant[0][0] and newY == en_passant[0][1]:
+                    chessboard[en_passant[1][0]][en_passant[1][1]] = " "
+                    en_passant = []
+                elif not en_passant_turn:
+                    en_passant = []
+            en_passant_turn = False
         else:
             print("Lance invalido")
             return False
@@ -354,26 +394,40 @@ def stockfish_piece_move():
     x, y = notation_to_x(best_move[0]), notation_to_y(best_move[1])
     newX, newY = notation_to_x(best_move[2]), notation_to_y(best_move[3])
 
-    make_piece_move(x, y, newX, newY)
+    print(best_move)
+
+    if len(best_move) > 4:
+        return make_piece_move(x, y, newX, newY, best_move[4])
+    else:
+        make_piece_move(x, y, newX, newY)
 
     return str(x) + str(y) + str(newX) + str(newY)
 
 
+# JOGAR CONTRA STOCKFISH
+#print_board()
 #while True:
 #    validMove = False
 #    while not validMove:
-#        print_board()
 #        move = input("Faça o lance: ")
 #        
-#        try:
-#            if make_piece_move(int(move[0]), int(move[1]), int(move[2]), int(move[3])) != False:
-#                print_board()
-#                validMove = True
-#        except:
+#        if make_piece_move(int(move[0]), int(move[1]), int(move[2]), int(move[3])) != False:
+#            print_board()
+#            print(en_passant)
+#            validMove = True
+#        else:
 #            print("Formato inválido, use coordenada inicial e coordenada final. EX: 4143 (e2 => e4)")
 #
-#    time.sleep(1)
-#    stockfish_move()
+#    #time.sleep(1)
+#    #stockfish_piece_move()
 #
 #    if move == "quit":
 #        quit()
+
+# ASSITIR STOCKFISH VS STOCKFISH
+loop = 0
+while loop < 40:
+    print_board()
+    time.sleep(2)
+    stockfish_piece_move()
+    loop += 1

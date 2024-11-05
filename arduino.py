@@ -112,11 +112,3 @@ while True:
 
 
         print("-------------")
-
-
-    #command = input("Coordenada: ")
-    #serialInst.write(command.encode('utf-8'))
-
-    #if command == "exit":
-    #    serialInst.close()
-    #    quit()
