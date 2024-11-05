@@ -16,7 +16,7 @@ stockfish.get_parameters()
 
 chessboard = [
     ["R", "P", " ", " ", " ", " ", "p", "r"],
-    ["N", "P", " ", " ", " ", " ", "P", "n"],
+    ["N", "P", " ", " ", " ", " ", "p", "n"],
     ["B", "P", " ", " ", " ", " ", "p", "b"],
     ["Q", "P", " ", " ", " ", " ", "p", "q"],
     ["K", "P", " ", " ", " ", " ", "p", "k"],
@@ -391,10 +391,12 @@ def stockfish_piece_move():
     stockfish.set_position(moves_history)
     best_move = str(stockfish.get_best_move())
 
+    print(best_move)
+    print(stockfish.get_evaluation())
+
     x, y = notation_to_x(best_move[0]), notation_to_y(best_move[1])
     newX, newY = notation_to_x(best_move[2]), notation_to_y(best_move[3])
 
-    print(best_move)
 
     if len(best_move) > 4:
         return make_piece_move(x, y, newX, newY, best_move[4])
@@ -404,7 +406,7 @@ def stockfish_piece_move():
     return str(x) + str(y) + str(newX) + str(newY)
 
 
-# JOGAR CONTRA STOCKFISH
+# JOGAR CONTRA STOCKFISH \ SOZINHO
 #print_board()
 #while True:
 #    validMove = False
@@ -425,9 +427,10 @@ def stockfish_piece_move():
 #        quit()
 
 # ASSITIR STOCKFISH VS STOCKFISH
-loop = 0
-while loop < 40:
-    print_board()
-    time.sleep(2)
-    stockfish_piece_move()
-    loop += 1
+#loop = 0
+#while loop < 40:
+#    print_board()
+#    virtual_board()
+#    time.sleep(2)
+#    stockfish_piece_move()
+#    loop += 1
